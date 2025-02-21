@@ -1,23 +1,18 @@
 import { useState } from "react";
 import reactLogo from "./assets/react.svg";
 import viteLogo from "/vite.svg";
-import "./App.css";
+import "./index.css";
+import LoginPage from "./pages/LoginPage";
 
 function App() {
   const [count, setCount] = useState(0);
 
   return (
-    <>
-      <h1>DigiVote</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          current voting is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+    <div>
+      <div className="bg-red-400">
+        <LoginPage />
       </div>
-    </>
+    </div>
   );
 }
 
