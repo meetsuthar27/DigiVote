@@ -2,28 +2,80 @@
 pragma solidity ^0.8.19;
 
 contract DPoS {
-    struct Delegate {
-        address delegateAddress;
+    struct Stakeholder {
         uint stake;
+        address delegate;
+        bool hasDelegated;
     }
 
-    mapping(address => uint) public stakes;
-    Delegate[] public delegates;
+    receive() external payable {} // Allows receiving plain ETH transactions
+    fallback() external payable {} // Handles incorrect function calls
 
-    event StakeAdded(address staker, uint amount);
-    event DelegateElected(address delegate);
+    mapping(address => Stakeholder) public stakeholders;
+    mapping(address => uint) public delegateVotes; // Delegated votes per delegate
+    address[] public delegates; // List of delegates
+    uint public totalStake;
 
-    function stakeTokens(uint _amount) public {
-        require(_amount > 0, "Stake amount must be greater than 0");
+    event Staked(address indexed voter, uint amount);
+    event VoteDelegated(address indexed from, address indexed to);
+    event Withdrawn(address indexed voter, uint amount);
 
-        stakes[msg.sender] += _amount;
-        emit StakeAdded(msg.sender, _amount);
+    modifier onlyValidStake(uint _amount) {
+        require(_amount > 0, "Stake must be greater than zero");
+        _;
     }
 
-    function electDelegate(address _delegate) public {
-        require(stakes[_delegate] > 0, "Delegate must have a stake");
+    function stake() external payable onlyValidStake(msg.value) {
+        stakeholders[msg.sender].stake += msg.value;
+        totalStake += msg.value;
+        emit Staked(msg.sender, msg.value);
+    }
 
-        delegates.push(Delegate(_delegate, stakes[_delegate]));
-        emit DelegateElected(_delegate);
+    function delegateVote(address _delegate) public {
+        require(stakeholders[msg.sender].stake > 0, "Must have stake to delegate");
+        require(!stakeholders[msg.sender].hasDelegated, "Already delegated");
+        require(_delegate != msg.sender, "Cannot delegate to yourself");
+
+        stakeholders[msg.sender].delegate = _delegate;
+        stakeholders[msg.sender].hasDelegated = true;
+        delegateVotes[_delegate] += stakeholders[msg.sender].stake;
+
+        // Only add to delegate list if it's a new delegate
+        bool isNew = true;
+        for (uint i = 0; i < delegates.length; i++) {
+            if (delegates[i] == _delegate) {
+                isNew = false;
+                break;
+            }
+        }
+        if (isNew) {
+            delegates.push(_delegate);
+        }
+
+        emit VoteDelegated(msg.sender, _delegate);
+    }
+
+    function getDelegateVotes(address _delegate) public view returns (uint) {
+        return delegateVotes[_delegate];
+    }
+
+    function withdrawStake(uint _amount) public {
+        require(stakeholders[msg.sender].stake >= _amount, "Insufficient stake");
+
+        stakeholders[msg.sender].stake -= _amount;
+        totalStake -= _amount;
+        
+        // Transfer ETH back to user
+        payable(msg.sender).transfer(_amount);
+
+        emit Withdrawn(msg.sender, _amount);
+    }
+
+    function getDelegates() public view returns (address[] memory) {
+        return delegates;
+    }
+
+    function getStake(address _staker) public view returns (uint) {
+        return stakeholders[_staker].stake;
     }
 }
