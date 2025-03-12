@@ -7,12 +7,16 @@ import ProposalDetailPage from "./pages/ProposalDetailPage";
 import DelegateSelection from "./pages/DelegateSelection";
 import ProposalHistory from "./pages/ProposalHistory";
 import "./index.css";
+import HomePage from "./pages/HomePage";
+import LoginPageTemp from "./pages/LoginPageTemp";
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/logintemp" element={<LoginPageTemp />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/userdash" element={<UserDashboard />} />
         <Route path="/create-proposal" element={<CreateProposal />} />
